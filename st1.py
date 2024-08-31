@@ -10,11 +10,11 @@ def generate_random_data():
         for i in range(6)
     ]
 
-# 初始数据
-data = generate_random_data()
+# 初始化容器
+placeholder = st.empty()
 
 # 嵌入D3.js可视化的HTML和JavaScript代码
-html_template = f"""
+html_template = """
 <head>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -22,13 +22,16 @@ html_template = f"""
     <div id="d3-bubble"></div>
 
     <script>
-        var data = {json.dumps(data)};
+        var svg;
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
         var width = 600;
         var height = 400;
-        var svg = d3.select("#d3-bubble").append("svg")
-            .attr("width", width)
-            .attr("height", height);
-        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        function setup() {{
+            svg = d3.select("#d3-bubble").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+        }}
 
         function update(data) {{
             var simulation = d3.forceSimulation(data)
@@ -53,21 +56,18 @@ html_template = f"""
             }});
         }}
 
-        update(data);
-
-        window.update = update;
+        setup();
     </script>
-</body>
 """
 
-# 在Streamlit中渲染初始的HTML
-st.components.v1.html(html_template, height=500)
+# 渲染初始HTML
+placeholder.html(html_template, height=500)
 
+# 持续更新数据
 while True:
     # 生成新的随机数据
     new_data = generate_random_data()
-    st.components.v1.html(
-        f"<script>window.update({json.dumps(new_data)});</script>",
-        height=0  # 设置为0，因为这里不需要显示额外的内容
-    )
-    time.sleep(6)  # 每秒更新一次
+    # 使用JavaScript更新D3图表
+    update_script = f"<script>window.update({json.dumps(new_data)});</script>"
+    placeholder.html(html_template + update_script, height=500)
+    time.sleep(2)  # 每2秒更新一次
