@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import json
+import time
 
 # 生成随机数据的函数
 def generate_random_data():
