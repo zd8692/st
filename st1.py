@@ -10,11 +10,14 @@ def generate_random_data():
         for i in range(6)
     ]
 
-# 初始化容器
+# 初始化空占位符
 placeholder = st.empty()
 
+# 初始数据
+data = generate_random_data()
+
 # 嵌入D3.js可视化的HTML和JavaScript代码
-html_template = """
+html_template = f"""
 <head>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -27,11 +30,9 @@ html_template = """
         var width = 600;
         var height = 400;
 
-        function setup() {{
-            svg = d3.select("#d3-bubble").append("svg")
-                .attr("width", width)
-                .attr("height", height);
-        }}
+        svg = d3.select("#d3-bubble").append("svg")
+            .attr("width", width)
+            .attr("height", height);
 
         function update(data) {{
             var simulation = d3.forceSimulation(data)
@@ -56,18 +57,17 @@ html_template = """
             }});
         }}
 
-        setup();
+        update({json.dumps(data)});
     </script>
+</body>
 """
 
 # 渲染初始HTML
 placeholder.html(html_template, height=500)
 
-# 持续更新数据
-while True:
-    # 生成新的随机数据
+# 更新按钮
+if st.button('Update Data'):
     new_data = generate_random_data()
-    # 使用JavaScript更新D3图表
-    update_script = f"<script>window.update({json.dumps(new_data)});</script>"
-    placeholder.html(html_template + update_script, height=500)
-    time.sleep(2)  # 每2秒更新一次
+    # 更新JavaScript图表数据
+    new_html_template = html_template[:-9] + f"update({json.dumps(new_data)});</script></body>"
+    placeholder.html(new_html_template, height=500)
