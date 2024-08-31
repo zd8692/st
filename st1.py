@@ -1,23 +1,8 @@
 import streamlit as st
-import numpy as np
 import json
-import time
 
-# 生成随机数据的函数
-def generate_random_data():
-    return [
-        {"id": chr(65+i), "value": np.random.randint(20, 80), "group": np.random.randint(1, 4)}
-        for i in range(6)
-    ]
-
-# 初始化空占位符
-placeholder = st.empty()
-
-# 初始数据
-data = generate_random_data()
-
-# 嵌入D3.js可视化的HTML和JavaScript代码
-html_template = f"""
+# 初始化页面，并定义JavaScript部分，包括数据更新逻辑
+html_content = """
 <head>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -25,49 +10,59 @@ html_template = f"""
     <div id="d3-bubble"></div>
 
     <script>
+        var data = [
+            {id: "A", value: 20, group: 1},
+            {id: "B", value: 40, group: 2},
+            {id: "C", value: 60, group: 3},
+            {id: "D", value: 80, group: 1},
+            {id: "E", value: 100, group: 2}
+        ];
         var svg;
-        var color = d3.scaleOrdinal(d3.schemeCategory10);
         var width = 600;
         var height = 400;
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
 
-        svg = d3.select("#d3-bubble").append("svg")
-            .attr("width", width)
-            .attr("height", height);
+        document.addEventListener("DOMContentLoaded", function(event) {
+            svg = d3.select("#d3-bubble").append("svg")
+                .attr("width", width)
+                .attr("height", height);
 
-        function update(data) {{
+            update(data);
+
+            // Set interval to update data every 2 seconds
+            setInterval(function() {
+                data.forEach(function(d) {
+                    d.value = Math.random() * 100 + 20; // Randomize the radius
+                });
+                update(data);
+            }, 2000);
+        });
+
+        function update(data) {
             var simulation = d3.forceSimulation(data)
                 .force("charge", d3.forceManyBody().strength(15))
                 .force("center", d3.forceCenter(width / 2, height / 2))
-                .force("collision", d3.forceCollide().radius(function(d) {{
+                .force("collision", d3.forceCollide().radius(function(d) {
                     return d.value;
-                }}));
+                }));
 
-            simulation.on("tick", function() {{
-                var u = svg.selectAll("circle").data(data, function(d) {{ return d.id; }});
+            simulation.on("tick", function() {
+                var u = svg.selectAll("circle").data(data, function(d) { return d.id; });
 
                 u.enter()
                     .append("circle")
-                    .attr("r", function(d) {{ return d.value; }})
-                    .style("fill", function(d) {{ return color(d.group); }})
+                    .attr("r", function(d) { return d.value; })
+                    .style("fill", function(d) { return color(d.group); })
                     .merge(u)
-                    .attr("cx", function(d) {{ return d.x; }})
-                    .attr("cy", function(d) {{ return d.y; }});
+                    .attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; });
 
                 u.exit().remove();
-            }});
-        }}
-
-        update({json.dumps(data)});
+            });
+        }
     </script>
 </body>
 """
 
-# 渲染初始HTML
-placeholder.html(html_template, height=500)
-
-# 更新按钮
-if st.button('Update Data'):
-    new_data = generate_random_data()
-    # 更新JavaScript图表数据
-    new_html_template = html_template[:-9] + f"update({json.dumps(new_data)});</script></body>"
-    placeholder.html(new_html_template, height=500)
+# 使用Streamlit的html方法来加载初始页面
+st.components.v1.html(html_content, height=500)
