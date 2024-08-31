@@ -70,4 +70,4 @@ while True:
         f"<script>window.update({json.dumps(new_data)});</script>",
         height=0  # 设置为0，因为这里不需要显示额外的内容
     )
-    time.sleep(3)  # 每秒更新一次
+    time.sleep(6)  # 每秒更新一次
